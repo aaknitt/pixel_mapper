@@ -18,7 +18,10 @@ class Universe:
 		self.source = source
 		self.pixelcount = int(channelcount/3)
 
+#EDIT THESE LINES AS NEEDED******************************************************
 #Configure the Universes to send to when controlling the pixels
+#format is as follows:
+#U1 = Universe(DMXSource(universe=UNIVERSE NUMBER),NUMBER OF CHANNELS IN THE UNIVERSE)  #for RGB pixels, there are three channels per pixel
 U1 = Universe(DMXSource(universe=2000),510)
 U2 = Universe(DMXSource(universe=2001),510)
 U3 = Universe(DMXSource(universe=2002),510)
@@ -26,11 +29,10 @@ U4 = Universe(DMXSource(universe=2003),510)
 U5 = Universe(DMXSource(universe=2004),60)
 universes = [U1,U2,U3,U4,U5]
 totalpixels = 750                 #total number of pixels to map
+cap = cv2.VideoCapture('rtsp://username:password@cam.ip.add.ress:88/videoMain')  #Foscam X1 address format - others will be different
 onval = [100,100,100]             #RGB value to use when turning the pixels on for detection
-outfilename = 'out.csv'           #filename to put the output data - be sure to rename this for each camera position
-camera_resolution = [1920,1080]   #resolution (in pixels) of the camera [Horizontal, Vertical]
-camera_fov = [140,107]            #field of view of the camera [degreesHorizontal,degreesVertical]
-cap = cv2.VideoCapture('rtsp://username:password@cam.ip.add.ress:88/videoMain')  #Foscam X1 format address - others will be different
+outfilename = 'out' + str(round(time.time())) + '.csv'  #filename to put the output data 
+#**********************************************************************************
 
 class videosource():
 	def __init__(self, source, pixels):
@@ -45,8 +47,6 @@ class videosource():
 		self.fov = []
 
 vsource = videosource(cap,totalpixels)
-vsource.resolution = camera_resolution
-vsource.fov = camera_fov
 
 CANVAS_SIZE = (600,800)
 FINAL_LINE_COLOR = (255, 255, 255)
@@ -147,23 +147,7 @@ def all_on():
 	for universe in universes:
 		universe.source.send_data(data=onval*universe.pixelcount)
 
-#display alignment overlays until the user hits ESK key
-done = False
-while done == False:
-	image = vsource.currentFrame
-	cv2.namedWindow(str(i), flags=cv2.WINDOW_NORMAL)
-	image = cv2.line(image,(round(vsource.resolution[0]/2),0),(round(vsource.resolution[0]/2),vsource.resolution[1]),(255,0,0),5)
-	image = cv2.line(image,(0,round(vsource.resolution[1]/2)),(vsource.resolution[0],round(vsource.resolution[1]/2)),(255,0,0),5)
-	pixel30neg = round(vsource.resolution[0]/2 - vsource.resolution[0]/vsource.fov[0]*30)
-	pixel30pos = round(vsource.resolution[0]/2 + vsource.resolution[0]/vsource.fov[0]*30)
-	image = cv2.line(image,(pixel30neg,0),(pixel30neg,vsource.resolution[1]),(0,255,0),5)
-	image = cv2.line(image,(pixel30pos,0),(pixel30pos,vsource.resolution[1]),(0,255,0),5)
-	cv2.imshow(str(i),image)
-	cv2.resizeWindow(str(i), 800, 450);
-	if cv2.waitKey(50) == 27: # ESC hit
-		done = True
-		
-cv2.destroyWindow(str(i))
+
 
 #Polygon masking - turn on all pixels and allow the user to draw a polygon around them to prevent
 #detecting light sources outside the area of interest
