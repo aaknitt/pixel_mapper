@@ -43,7 +43,9 @@ Note that you'll likely need to re-level the camera as you make rotational adjus
 Once the camera is properly aligned horizontally, the last step is to set its vertical location relative to a fixed object.  In my case I manually turned on a single pixel on the tree that I was mapping using the Display Testing function in Falcon Player - FPP.  This pixels was used as my vertical reference point for all three camera locations.  I then raised or lowered the camera on the tripod using the hand crank extension until the blue horizontal overlay line from camer_align.py was directly over the reference pixel.  
 
 ## Data Capture
-pixel_automap.py is used to capture the data.  This script will be run three times, once with the camera at each of the three locations identified above.  
+pixel_automap.py is used to capture the data.  This script will be run three times, once with the camera at each of the three locations identified above. 
+
+Depending on your controller configuration, you may need to put it into Bridge Mode to allow it to receive sACN packets from pixel_automap.py.
 
 There are a number of configuration elements at the beginning of the script that will need to be modified to fit your setup.  First, the sACN Universes need to be configured.  This will be entirely dependant on the number of pixels you're mapping and how you have the Universes set up in your pixel controller.  You'll also need to specify the camera source to use.  You can also optionally specify an output RGB value to use (default is [100,100,100]) when the pixels are turned on and the name of the output CSV file that is created.  
 
