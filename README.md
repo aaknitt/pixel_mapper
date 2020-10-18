@@ -5,7 +5,7 @@ Output is an xLights file format 3D model of the pixels.
 
 ### Prerequisites
 * [opencv-python](https://pypi.org/project/opencv-python/)
-* [Lumos library](https://github.com/ptone/Lumos) to control pixels via sACN
+* [Lumos library](https://github.com/ptone/Lumos) to control pixels via E1.31 sACN
 * [numpy](https://numpy.org/)
 * [imutils](https://pypi.org/project/imutils/)
 * [scikit-image](https://scikit-image.org/)
@@ -49,9 +49,9 @@ pixel_automap.py is used to capture the data.  This script will be run three tim
 
 Depending on your controller configuration, you may need to put it into Bridge Mode to allow it to receive sACN packets from pixel_automap.py.
 
-There are a number of configuration elements at the beginning of the script that will need to be modified to fit your setup.  First, the sACN Universes need to be configured.  This will be entirely dependant on the number of pixels you're mapping and how you have the Universes set up in your pixel controller.  You'll also need to specify the camera source to use.  You can also optionally specify an output RGB value to use (default is [100,100,100]) when the pixels are turned on and the name of the output CSV file that is created.  
+There are a number of configuration elements at the beginning of the script that will need to be modified to fit your setup.  First, the E1.31 sACN Universes need to be configured.  This will be entirely dependant on the number of pixels you're mapping and how you have the Universes set up in your pixel controller.  You'll also need to specify the camera source to use.  You can also optionally specify an output RGB value to use (default is [100,100,100]) when the pixels are turned on and the name of the output CSV file that is created.  
 
-Once pixel_automap.py is configured and run, it will first turn on all of the pixels that have been configured for sACN control and show the camera image.  The user can then click points around the pixels to create a polygon that encompasses all of the pixels.  This polygon will be used as a mask when detecting individual pixels.  Bright lights outside of this polygon will be ignored during the detection process.  Left click to create new points on the polygon and right click to end the polygon.  
+Once pixel_automap.py is configured and run, it will first turn on all of the pixels that have been configured for E1.31 sACN control and show the camera image.  The user can then click points around the pixels to create a polygon that encompasses all of the pixels.  This polygon will be used as a mask when detecting individual pixels.  Bright lights outside of this polygon will be ignored during the detection process.  Left click to create new points on the polygon and right click to end the polygon.  
 
 After the polygon has been drawn, pixel_automap.py will turn on each individual pixel one at a time and try to detect its location.  If the script is able to detect the location, it will draw a red circle around the pixel, record the coordinats in the output CSV file, and automatically move to the next pixel.  If it us unable to detect the location of the pixel, it will play a sound on the computer to get your attention.  At this point you have two choices to proceed:
 1. If you are able to see the location of the pixel, you may click on it.  The coordinates of your click will be used as the pixel location.  
