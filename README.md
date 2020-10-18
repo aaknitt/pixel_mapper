@@ -25,13 +25,15 @@ The three camera locations must be exactly 120 degrees apart around the object t
 
 Once the required distance from the object has been determined (based on its size and the camera FOV) by moving the camera around and viewing the image, the length of the edges of the equilateral triangle can be determined.  Once these lengths are known, a simple alignment method is to cut three strings to the same length of the triangle edge and pull them tight into the shape of the triangle.  Mark the locations of the three vertices on the ground.  These are the three camera locations that will be used in the following steps.  
 
+<img alt="String Positioning" src="https://raw.githubusercontent.com/aaknitt/pixel_mapper/main/images/StringPosition.jpg" width="40%">
+
 ## Camera Alignment
 For correct results when translating the three sets of 2D pixel coordinates into one set of 3D coordinates, the camera must be aligned to point directly at the center of the equilateral triangle from each of its three capture locations.  Additionally, the height of the camera at each location must be the same relative to a fixed reference point (not relative to ground, unless the ground is perfectly flat).
 
 Using a camera tripod is highly recommended, as tripods have adjustments to move the camera in all of the required axis and usually have bubble levels built in to aid in leveling.  
 
 Once the camera has been placed directly over its required position on the tripod, the first step is to get the camera leveled.  Once it has been leveled, the camera_align.py script can be run to aid in rotational and vertical alignment.  You'll need to edit the first two lines of code in camera_align.py to specify the resolution of your camera and its VideoCapture source address (an IP address for a WiFi camera or simply an index for a USB camera).  
-<img src="/images/StringPosition.jpg" width="40%">
+
 ### Rotational/Horizontal Alignment
 First, place some easily visible objects (5 gallon bucket, for example) at the other two camera locations on the equilateral triangle.  The camera on the tripod needs to be aimed so that its center point is directly between the objects.  
 
