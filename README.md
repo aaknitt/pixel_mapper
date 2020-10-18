@@ -58,3 +58,10 @@ After the polygon has been drawn, pixel_automap.py will turn on each individual 
 2. If you are anuable to see the location of the pixel (it's on the back side of the tree, for example), simply click anywhere outside the masking polygon.  The coordinates of the pixel will be stored as [0,0] in the output CSV file.
 
 ## Data Combining & 3D xLights Model Generation
+Once a CSV file has been created for each of the three camera positions, those three CSV files are used by calc_points.py to convert the 2D coordinates captured from each location into a single set of 3D coordinates.  
+
+Strictly speaking, only two camera locations are needed to generate 3D coordinates.  However, because many pixels will be blocked from a single camera location (the tree is not transparent), three positions are used.  
+
+Because there are three camera locations, there are three different combinations of two camera positions that can each be used to generate a set of 3D coordinates (positions 1&2,2&3,3&1).  calc_points.py will calculate a set of 3D coordinates from each 2-camera combination, and then average the three sets of 3D coordinates together to generate the final result.
+
+Once the final set of 3D coordinates has been generated, calc_points.py will then export the final results to an xLights format model file and plot the results for viewing.  
