@@ -31,7 +31,7 @@ For correct results when translating the three sets of 2D pixel coordinates into
 Using a camera tripod is highly recommended, as tripods have adjustments to move the camera in all of the required axis and usually have bubble levels built in to aid in leveling.  
 
 Once the camera has been placed directly over its required position on the tripod, the first step is to get the camera leveled.  Once it has been leveled, the camera_align.py script can be run to aid in rotational and vertical alignment.  You'll need to edit the first two lines of code in camera_align.py to specify the resolution of your camera and its VideoCapture source address (an IP address for a WiFi camera or simply an index for a USB camera).  
-
+<img src="/images/StringPosition.jpg" width="40%">
 ### Rotational/Horizontal Alignment
 First, place some easily visible objects (5 gallon bucket, for example) at the other two camera locations on the equilateral triangle.  The camera on the tripod needs to be aimed so that its center point is directly between the objects.  
 
