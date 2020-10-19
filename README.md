@@ -1,7 +1,8 @@
 # pixel_mapper
-Python scripts for semi-automatic mapping of RGB pixels in 3D space using computer vision.  Designed particularly for wrapping trees with pixels.
+A small collection of Python scripts for semi-automatic mapping of RGB pixels in 3D space using computer vision.  Designed particularly for wrapping trees with pixels.
 
-Output is an xLights file format 3D model of the pixels.
+Final output is an xLights file format 3D model of the pixels.
+<br>
 <br>
 Example of a pixel-wrapped tree and the resulting 3D model in xLights:
 <br>
