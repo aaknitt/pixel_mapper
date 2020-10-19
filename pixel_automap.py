@@ -8,7 +8,7 @@ import socket
 import sys  
 import json
 import time
-from source import DMXSource
+from lumos import DMXSource
 import _thread
 import matplotlib.path as pltPath
 from playsound import playsound
@@ -29,7 +29,7 @@ U4 = Universe(DMXSource(universe=2003),510)
 U5 = Universe(DMXSource(universe=2004),60)
 universes = [U1,U2,U3,U4,U5]
 totalpixels = 750                 #total number of pixels to map
-cap = cv2.VideoCapture('rtsp://username:password@cam.ip.add.ress:88/videoMain')  #Foscam X1 address format - others will be different
+cap = cv2.VideoCapture('rtsp://user:password@ip.addr.of.cam:88/videoMain')  #Foscam X1 address format - others will be different
 onval = [100,100,100]             #RGB value to use when turning the pixels on for detection
 outfilename = 'out' + str(round(time.time())) + '.csv'  #filename to put the output data 
 #**********************************************************************************

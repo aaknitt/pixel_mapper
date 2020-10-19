@@ -15,6 +15,7 @@ files = ['data/dataC1U1-5.csv','data/dataC2U1-5.csv','data/dataC3U1-5.csv']
 fov = [95, 53] #field of view of the camera [degreesHorizontal,degreesVertical]
 res = [1920, 1080] #resolution (in pixels) of the camera [Horizontal, Vertical]
 D = 370  #distance (in any units) from the camera to the center of the triangle
+xLights_output_scale_factor = 3.0  #scaling factor to reduce the size of the xLights output file to a reasonable size
 
 data = []
 for i, file in enumerate(files):
@@ -102,7 +103,7 @@ for i, point in enumerate(out):
 #pixel numbers (index of pixel) go between
 
 #determine the max size of the matrix to use for the model.  
-dataout = np.array(out)/3.   #divide numbers down to a reasonable resolution so the file is not too large
+dataout = np.array(out)/xLights_output_scale_factor   #divide numbers down to a reasonable resolution so the file is not too large
 dataout = np.nan_to_num(dataout,copy=False)
 dataout = (dataout.round()).astype('i')
 xmin = np.nanmin(dataout[:,0])
