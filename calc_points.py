@@ -16,6 +16,7 @@ fov = [95, 53] #field of view of the camera [degreesHorizontal,degreesVertical]
 res = [1920, 1080] #resolution (in pixels) of the camera [Horizontal, Vertical]
 D = 370  #distance (in any units) from the camera to the center of the triangle
 xLights_output_scale_factor = 3.0  #scaling factor to reduce the size of the xLights output file to a reasonable size
+outfilename = 'output.xmodel'
 
 data = []
 for i, file in enumerate(files):
@@ -140,7 +141,7 @@ for i, z in enumerate(xlout):
 	if i != len(xlout)-1:
 		outstring = outstring + "|"
 outxml = '<?xml version="1.0" encoding="UTF-8"?><custommodel name="Test" parm1="' + str(xmax-xmin) + '" parm2="' + str(zmax-zmin) + '" Depth="' + str(ymax-ymin) + '" StringType="RGB Nodes" Transparency="0" PixelSize="2" ModelBrightness="" Antialias="1" StrandNames="" NodeNames="" CustomModel="' + outstring + '" SourceVersion="2020.37"  ></custommodel>'
-f = open('test.xmodel','w')
+f = open(outfilename,'w')
 f.write(outxml)
 f.close()
 
