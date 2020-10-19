@@ -40,6 +40,9 @@ First, place some easily visible objects (5 gallon bucket, for example) at the o
 camera_align.py will overlay two yellow lines over the camera image.  The location of these lines can be moved in and out by using the right and left arrow keys on the keyboard.  When properly aligned, these yellow lines should pass directly over the two objects (buckets or whatever) that you've placed at the two other camera locations.  
 
 Note that you'll likely need to re-level the camera as you make rotational adjustments.  It doesn't take much movement to bump things out of level.  
+[Video showing horizontal alignment process](https://github.com/aaknitt/pixel_mapper/blob/main/images/AlignmentHorizontal.mp4)
+<br>
+<img alt="Horizontal Camera Alignment" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/AlignHorizontal.png" width="40%">
 
 ### Vertical Alignment
 Once the camera is properly aligned horizontally, the last step is to set its vertical location relative to a fixed object.  In my case I manually turned on a single pixel on the tree that I was mapping using the Display Testing function in Falcon Player - FPP.  This pixels was used as my vertical reference point for all three camera locations.  I then raised or lowered the camera on the tripod using the hand crank extension until the blue horizontal overlay line from camer_align.py was directly over the reference pixel.  
@@ -53,9 +56,17 @@ There are a number of configuration elements at the beginning of the script that
 
 Once pixel_automap.py is configured and run, it will first turn on all of the pixels that have been configured for E1.31 sACN control and show the camera image.  The user can then click points around the pixels to create a polygon that encompasses all of the pixels.  This polygon will be used as a mask when detecting individual pixels.  Bright lights outside of this polygon will be ignored during the detection process.  Left click to create new points on the polygon and right click to end the polygon.  
 
+[Video showing polygon drawing process](https://github.com/aaknitt/pixel_mapper/blob/main/images/DrawPolygon.mp4)
+<br>
+<img alt="Polygon Drawing" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/DrawPolygon.png" width="40%">
+
 After the polygon has been drawn, pixel_automap.py will turn on each individual pixel one at a time and try to detect its location.  If the script is able to detect the location, it will draw a red circle around the pixel, record the coordinats in the output CSV file, and automatically move to the next pixel.  If it us unable to detect the location of the pixel, it will play a sound on the computer to get your attention.  At this point you have two choices to proceed:
 1. If you are able to see the location of the pixel, you may click on it.  The coordinates of your click will be used as the pixel location.  
 2. If you are anuable to see the location of the pixel (it's on the back side of the tree, for example), simply click anywhere outside the masking polygon.  The coordinates of the pixel will be stored as [0,0] in the output CSV file.
+
+[Video showing pixel detection process](https://github.com/aaknitt/pixel_mapper/blob/main/images/Mapping.mp4)
+<br>
+<img alt="Pixel Mapping" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/Mapping.png" width="40%">
 
 ## Data Combining & 3D xLights Model Generation
 Once a CSV file has been created for each of the three camera positions, those three CSV files are used by calc_points.py to convert the 2D coordinates captured from each location into a single set of 3D coordinates.  
@@ -65,3 +76,8 @@ Strictly speaking, only two camera locations are needed to generate 3D coordinat
 Because there are three camera locations, there are three different combinations of two camera positions that can each be used to generate a set of 3D coordinates (positions 1&2,2&3,3&1).  calc_points.py will calculate a set of 3D coordinates from each 2-camera combination, and then average the three sets of 3D coordinates together to generate the final result.
 
 Once the final set of 3D coordinates has been generated, calc_points.py will then export the final results to an xLights format model file and plot the results for viewing.  
+
+
+[Video showing mapped tree with effects](https://github.com/aaknitt/pixel_mapper/blob/main/images/FinalResult.mp4)
+<br>
+<img alt="Final Result" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/FinalResult.png" width="40%">
