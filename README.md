@@ -75,9 +75,16 @@ Strictly speaking, only two camera locations are needed to generate 3D coordinat
 
 Because there are three camera locations, there are three different combinations of two camera positions that can each be used to generate a set of 3D coordinates (positions 1&2,2&3,3&1).  calc_points.py will calculate a set of 3D coordinates from each 2-camera combination, and then average the three sets of 3D coordinates together to generate the final result.
 
-Once the final set of 3D coordinates has been generated, calc_points.py will then export the final results to an xLights format model file and plot the results for viewing.  
+Three sets of 3D coordinates prior to averaging:
+<br>
+<img alt="Three 3D data sets" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/Three3D.png" width="40%">
+<br>
+Combined/averaged coordinate set along with final xLights model:
+<br>
+<img alt="Final Result" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/xLightsModel.JPG" width="40%">
 
+Once the final set of 3D coordinates has been generated, calc_points.py will then export the final results to an xLights format model file and plot the results for viewing.  
 
 [Video showing mapped tree with effects](https://github.com/aaknitt/pixel_mapper/blob/main/images/FinalResult.mp4)
 <br>
-<img alt="Final Result" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/FinalResult.png" width="40%">
+<img alt="Final Result with Effects" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/FinalResult.png" width="40%">
