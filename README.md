@@ -7,6 +7,10 @@ Final output is an xLights file format 3D model of the pixels.
 Example of a pixel-wrapped tree and the resulting 3D model in xLights:
 <br>
 <img alt="Wrapped Tree" src="https://github.com/aaknitt/pixel_mapper/blob/main/images/Tree.jpg" width="40%">
+<br>
+Some poorly shot video of the tree in action on Halloween during trick or treating:
+
+https://www.youtube.com/watch?v=ifu_yMDDcYU
 
 ### Prerequisites
 * [opencv-python](https://pypi.org/project/opencv-python/)
