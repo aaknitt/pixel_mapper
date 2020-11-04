@@ -12,6 +12,10 @@ Some poorly shot video of the tree in action on Halloween during trick or treati
 
 https://www.youtube.com/watch?v=ifu_yMDDcYU
 
+And red white & blue on election night:
+
+https://www.youtube.com/watch?v=PFOB23FCTPQ
+
 ### Prerequisites
 * [opencv-python](https://pypi.org/project/opencv-python/)
 * [Lumos library](https://github.com/ptone/Lumos) to control pixels via E1.31 sACN
