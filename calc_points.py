@@ -5,12 +5,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import csv
 from scipy.spatial.transform import Rotation as R
+from scipy.interpolate import interp1d
 
 #Three CSV data files containing the 2D coordinate points found from each of three camera positions
 #The three camera positions form an equilateral triangle around the pixel array
 #second camera position is to the right of the first position - counter-clockwise rotation
 #these files are generated from running pixel_automap.py three times - one from each camera location
-files = ['data/dataC1U1-5.csv','data/dataC2U1-5.csv','data/dataC3U1-5.csv']
+files = ['../data/dataC1U1-5.csv','../data/dataC2U1-5.csv','../data/dataC3U1-5.csv']
 
 fov = [95, 53] #field of view of the camera [degreesHorizontal,degreesVertical]
 res = [1920, 1080] #resolution (in pixels) of the camera [Horizontal, Vertical]
@@ -80,24 +81,28 @@ for i in range(len(data0)):
 	zavg = np.nanmean([data0[i][2],data1[i][2],data2[i][2]])
 	out.append([xavg,yavg,zavg])
 
-#single point linear interpolation of the output to fill in missing points
-'''
-for i, point in enumerate(out):
-	#if point[0] == 0 and i != 0 and i != len(out):
-	if point[0] == 0:
-		print("FOUND AN EMTPY SPOT")
-		print(i)
-		try:
-			if out[i-1][1] != 0 and out[i+1][1] != 0:
-				point[1] = (out[i-1][1] + out[i+1][1])/2.
-				point[2] = (out[i-1][2] + out[i+1][2])/2.
-				point[3] = (out[i-1][3] + out[i+1][3])/2.
-				print(point)
-		except:
-			print("FAIL")
-'''
+arr = np.array(out)
+x = arr[0:,0]
+y = arr[0:,1]
+z = arr[0:,2]
 
-	
+def fill_nan(A):
+	'''
+	interpolate to fill nan values
+	https://stackoverflow.com/questions/6518811/interpolate-nan-values-in-a-numpy-array
+	'''
+	inds = np.arange(A.shape[0])
+	good = np.where(np.isfinite(A))
+	f = interp1d(inds[good], A[good],bounds_error=False,kind='cubic')
+	B = np.where(np.isfinite(A),A,f(inds))
+	return B
+
+x = fill_nan(x)
+y = fill_nan(y)
+z = fill_nan(z)
+out = np.stack((x,y,z),axis=1)
+
+
 #Create output file in xlights format
 #xlights format:
 #commas separate columns (width) (X), semicolons separate rows (height) (Y), "|" separate depth (Z)
@@ -118,7 +123,8 @@ xlout = np.zeros([xmax-xmin,zmax-zmin,ymax-ymin],'i')
 #for each pixel, populate the location in the matrix with the index number of the pixel
 #locations in the matrix without a pixel will remain zeros
 
-
+#print("Found " + str(len(dataout)) + " pixel locations")
+#print(dataout)
 
 #global axis   xLights axis
 #    X             X
