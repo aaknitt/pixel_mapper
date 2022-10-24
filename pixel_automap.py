@@ -27,22 +27,27 @@ U2 = Universe(DMXSource(universe=2001),510)
 U3 = Universe(DMXSource(universe=2002),510)
 U4 = Universe(DMXSource(universe=2003),510)
 U5 = Universe(DMXSource(universe=2004),60)
-universes = [U1,U2,U3,U4,U5]
-totalpixels = 750                 #total number of pixels to map
-cap = cv2.VideoCapture('rtsp://user:password@ip.addr.of.cam:88/videoMain')  #Foscam X1 address format - others will be different
-onval = [100,100,100]             #RGB value to use when turning the pixels on for detection
-outfilename = 'out' + str(round(time.time())) + '.csv'  #filename to put the output data 
+universes = [U3]
+totalpixels = 190                 #total number of pixels to map
+#cap = cv2.VideoCapture('rtsp://user:password@ip.addr.of.cam:88/videoMain')  #Foscam X1 address format - others will be different
+camera_resolution = [1920,1080]   #resolution (in pixels) of the camera [Horizontal, Vertical]
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_resolution[0])
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_resolution[1])
+onval = [255,255,255]             #RGB value to use when turning the pixels on for detection
+outfilename = 'out' + str(round(time.time())) + '.json'  #filename to put the output data 
 #**********************************************************************************
 
 class videosource():
 	def __init__(self, source, pixels):
 		self.source = source
 		self.currentFrame = None
+		self.retval = False
 		self.polygon = None
 		self.point1 = [None,None]
 		self.point2 = [None,None]
 		self.zscale = 1
-		self.outputpoints = [[0,0,0]]*pixels
+		self.outputpoints = [[-1,0,0]]*pixels
 		self.resolution = []
 		self.fov = []
 
@@ -57,13 +62,14 @@ WORKING_LINE_COLOR = (127, 127, 127)
 #will be running in its own thread that gets started below
 def updateFrame(videosource):
 	while(True):
-		ret, videosource.currentFrame = videosource.source.read()
+		videosource.retval, videosource.currentFrame = videosource.source.read()
 		cv2.waitKey(1)
 
 #Starts continuosly updating the images in a thread - if we don't do this, old images get stuck in the video buffer
 _thread.start_new_thread(updateFrame,(vsource,))
-
-time.sleep(1)
+while vsource.retval == False:
+	print("waiting for video")
+	time.sleep(1)
 
 class PolygonDrawer(object):
 	def __init__(self, window_name,videosource):
@@ -183,7 +189,7 @@ for unum, universe in enumerate(universes):
 		while attempts >0:
 			pixelout = {}
 			all_off()
-			time.sleep(0.7)
+			time.sleep(0.1)
 			image_off = vsource.currentFrame
 			print("image_off")
 			cv2.imshow("Camera1",image_off)
@@ -194,7 +200,7 @@ for unum, universe in enumerate(universes):
 			image = vsource.currentFrame
 			print("image")
 			cv2.imshow("Camera1",image)
-			cv2.waitKey(500)
+			cv2.waitKey(100)
 			####MASK OUT THE PORTIONS OF THE IMAGES WE DON'T CARE ABOUT###########
 			height, width, channels = image_off.shape
 			canvas = np.zeros((height,width), np.uint8)
@@ -283,15 +289,15 @@ for unum, universe in enumerate(universes):
 				done = 0
 				while done == 0:
 					cv2.waitKey(50)
-					if vsource.outputpoints[unum*170+index] != [0,0,0]:
+					if vsource.outputpoints[unum*170+index] != [-1,0,0]:
 						done = 1
 					else:
 						done = 0
 				attempts = 0
-		with open('data1.txt', 'a') as outfile:
+		with open(outfilename.replace('.json','.txt'), 'a') as outfile:
 			outfile.write(str(unum*170+index) + ',' + str(vsource.outputpoints[unum*170+index][1]) + ',' + str(vsource.outputpoints[unum*170+index][2]) + "\n")
 all_off()
 
 with open(outfilename, 'w') as outfile:
 	#json.dump([sorted_by_pixel_x, sorted_by_pixel_y], outfile)
-	json.dump(videosource.outputpoints, outfile)
+	json.dump(vsource.outputpoints, outfile)

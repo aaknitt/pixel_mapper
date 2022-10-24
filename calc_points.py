@@ -11,13 +11,14 @@ from scipy.interpolate import interp1d
 #The three camera positions form an equilateral triangle around the pixel array
 #second camera position is to the right of the first position - counter-clockwise rotation
 #these files are generated from running pixel_automap.py three times - one from each camera location
-files = ['../data/dataC1U1-5.csv','../data/dataC2U1-5.csv','../data/dataC3U1-5.csv']
+files = ['../data/2022TreeData/C1.csv','../data/2022TreeData/C3.csv','../data/2022TreeData/C2.csv']
+#files = ['../data/2020/dataC1U1-5.csv','../data/2020/dataC2U1-5.csv','../data/2020/dataC3U1-5.csv']
 
-fov = [95, 53] #field of view of the camera [degreesHorizontal,degreesVertical]
+fov = [65, 53] #field of view of the camera [degreesHorizontal,degreesVertical]
 res = [1920, 1080] #resolution (in pixels) of the camera [Horizontal, Vertical]
 D = 370  #distance (in any units) from the camera to the center of the triangle
-xLights_output_scale_factor = 3.0  #scaling factor to reduce the size of the xLights output file to a reasonable size
-outfilename = 'output.xmodel'
+xLights_output_scale_factor = 2.0  #scaling factor to reduce the size of the xLights output file to a reasonable size
+outfilename = '../data/2022TreeData/output.xmodel'
 
 data = []
 for i, file in enumerate(files):
@@ -29,6 +30,8 @@ outpoints = [[[0,0,0,0] for i in range(len(data[0]))] for i in range(3)]
 
 #second camera is to the right of the first camera - counter-clockwise rotation
 combinations = [[data[0],data[1]],[data[1],data[2]],[data[2],data[0]]]
+#combinations = [[data[0],data[1]],[data[1],data[2]]]
+#combinations = [[data[0],data[1]],[data[2],data[0]]]
 for k, combodata in enumerate(combinations):
 	for i in range(0,len(combodata[0])):
 		if combodata[0][i][1] != 0 and combodata[1][i][1] != 0:  #camera 1 and camera 2 points are both valid
@@ -49,6 +52,15 @@ for k, combodata in enumerate(combinations):
 			z1 = math.tan(math.radians(z1angle))*d1
 			z2 = math.tan(math.radians(z2angle))*d2
 			z = (z1+z2)/2.
+			if y > 4000:
+				print(i)
+				print(combodata[0][i][1])
+				print(combodata[1][i][1])
+				print(C1angle)
+				print(C2angle)
+				print(x)
+				print(y)
+				print(z)
 			outpoints[k][i] = [i,x,y,z]
 		else:
 			outpoints[k][i] = [i,0,0,0]
@@ -64,8 +76,10 @@ r = R.from_euler('z',120,degrees=True)
 data1 = r.apply(data1)
 data2 = np.array(outpoints[2])
 data2 = np.delete(data2,0,1)
+print(np.amax(data2))
 r = R.from_euler('z',240,degrees=True)
 data2 = r.apply(data2)
+print(np.amax(data2))
 
 #turn zeros into NaN so that we don't use zero points (no pixel found) in the averaging below
 data0[data0==0] = np.nan
@@ -93,7 +107,7 @@ def fill_nan(A):
 	'''
 	inds = np.arange(A.shape[0])
 	good = np.where(np.isfinite(A))
-	f = interp1d(inds[good], A[good],bounds_error=False,kind='cubic')
+	f = interp1d(inds[good], A[good],fill_value="extrapolate",bounds_error=False,kind='cubic')
 	B = np.where(np.isfinite(A),A,f(inds))
 	return B
 
@@ -102,6 +116,16 @@ y = fill_nan(y)
 z = fill_nan(z)
 out = np.stack((x,y,z),axis=1)
 
+'''
+#Manually adjust values here if needed
+import sys
+np.set_printoptions(threshold=sys.maxsize)
+out[0][0] = -10
+out[0][2] = -71
+out[1][0] = -15
+out[1][2] = -71
+print(out)
+'''
 
 #Create output file in xlights format
 #xlights format:
@@ -119,6 +143,11 @@ ymax = np.nanmax(dataout[:,1])
 zmin = np.nanmin(dataout[:,2])
 zmax = np.nanmax(dataout[:,2])
 #start with a matrix filled with zeros.  
+print(xmax-xmin)
+print(zmax-zmin)
+print(ymax-ymin)
+print(len(dataout)," pixels in model")
+
 xlout = np.zeros([xmax-xmin,zmax-zmin,ymax-ymin],'i')
 #for each pixel, populate the location in the matrix with the index number of the pixel
 #locations in the matrix without a pixel will remain zeros
@@ -130,8 +159,13 @@ xlout = np.zeros([xmax-xmin,zmax-zmin,ymax-ymin],'i')
 #    X             X
 #    Y             Z
 #    Z             Y
+collision_counter = 0
 for i, point in enumerate(dataout):
+	if xlout[point[0]-xmin-1,-1*(point[2]-zmin-1),point[1]-ymin-1] != 0:
+		print("two pixels at ",point[0]-xmin-1," ",-1*(point[2]-zmin-1)," ",point[1]-ymin-1)
+		collision_counter = collision_counter + 1
 	xlout[point[0]-xmin-1,-1*(point[2]-zmin-1),point[1]-ymin-1] = i+1
+print(collision_counter," collisions")
 
 #create an output string in xLights format
 outstring = ""
@@ -151,11 +185,16 @@ f = open(outfilename,'w')
 f.write(outxml)
 f.close()
 
+
 #plot our points
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(dataout[:,0], dataout[:,1], dataout[:,2])
+#ax.scatter(x,y,z)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
+#ax.axes.set_xlim3d(left=-200, right=300) 
+#ax.axes.set_ylim3d(bottom=-300, top=200) 
+#ax.axes.set_zlim3d(bottom=-200, top=300) 
 plt.show()
