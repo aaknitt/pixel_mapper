@@ -19,6 +19,7 @@ https://www.youtube.com/watch?v=PFOB23FCTPQ
 ### Prerequisites
 * [opencv-python](https://pypi.org/project/opencv-python/)
 * [Lumos library](https://github.com/ptone/Lumos) to control pixels via E1.31 sACN
+  * [Use this fork](https://github.com/tonyazzolino/Lumos) for Python 3 compatibility
 * [numpy](https://numpy.org/)
 * [imutils](https://pypi.org/project/imutils/)
 * [scikit-image](https://scikit-image.org/)
