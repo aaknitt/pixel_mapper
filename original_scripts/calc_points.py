@@ -11,14 +11,15 @@ from scipy.interpolate import interp1d
 #The three camera positions form an equilateral triangle around the pixel array
 #second camera position is to the right of the first position - counter-clockwise rotation
 #these files are generated from running pixel_automap.py three times - one from each camera location
-files = ['../data/2022TreeData/C1.csv','../data/2022TreeData/C3.csv','../data/2022TreeData/C2.csv']
+#files = ['../data/2024/2024_tree_well/2024_tree_well.csv','../data/2024/2024_tree_driveway/2024_tree_driveway.csv','../data/2024/2024_tree_road_corner/2024_tree_road_corner.csv']
+files = ['../data/2025/2025_tree_well/2025_tree_well.csv','../data/2025/2025_tree_driveway/2025_tree_driveway.csv','../data/2025/2025_tree_road_corner/2025_tree_road_corner.csv']
 #files = ['../data/2020/dataC1U1-5.csv','../data/2020/dataC2U1-5.csv','../data/2020/dataC3U1-5.csv']
 
 fov = [65, 53] #field of view of the camera [degreesHorizontal,degreesVertical]
 res = [1920, 1080] #resolution (in pixels) of the camera [Horizontal, Vertical]
 D = 370  #distance (in any units) from the camera to the center of the triangle
-xLights_output_scale_factor = 2.0  #scaling factor to reduce the size of the xLights output file to a reasonable size
-outfilename = '../data/2022TreeData/output.xmodel'
+xLights_output_scale_factor = 1.7  #scaling factor to reduce the size of the xLights output file to a reasonable size
+outfilename = '../data/Treeoutput2025.xmodel'
 
 data = []
 for i, file in enumerate(files):
@@ -33,7 +34,9 @@ combinations = [[data[0],data[1]],[data[1],data[2]],[data[2],data[0]]]
 #combinations = [[data[0],data[1]],[data[1],data[2]]]
 #combinations = [[data[0],data[1]],[data[2],data[0]]]
 for k, combodata in enumerate(combinations):
+	print(len(combodata[0]),len(combodata[1]))
 	for i in range(0,len(combodata[0])):
+		#print(combodata[0],combodata[1])
 		if combodata[0][i][1] != 0 and combodata[1][i][1] != 0:  #camera 1 and camera 2 points are both valid
 			C1angle = 180 - (fov[0]/2.)*(combodata[0][i][1]-res[0]/2.)/(res[0]/2.)
 			C2angle = 120 - (fov[0]/2.)*(combodata[1][i][1]-res[0]/2.)/(res[0]/2.)
@@ -160,12 +163,15 @@ xlout = np.zeros([xmax-xmin,zmax-zmin,ymax-ymin],'i')
 #    Y             Z
 #    Z             Y
 collision_counter = 0
+csvout = open(outfilename.replace('.xmodel','.csv'),'w')
 for i, point in enumerate(dataout):
 	if xlout[point[0]-xmin-1,-1*(point[2]-zmin-1),point[1]-ymin-1] != 0:
 		print("two pixels at ",point[0]-xmin-1," ",-1*(point[2]-zmin-1)," ",point[1]-ymin-1)
 		collision_counter = collision_counter + 1
 	xlout[point[0]-xmin-1,-1*(point[2]-zmin-1),point[1]-ymin-1] = i+1
+	csvout.write(f'{point[0]},{point[1]},{point[2]}\n')
 print(collision_counter," collisions")
+csvout.close()
 
 #create an output string in xLights format
 outstring = ""

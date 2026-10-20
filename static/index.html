@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pixel Mapper</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="topbar">
+<header>
+  <h1>Pixel Mapper</h1>
+  <div class="picker">
+    <label>Project
+      <select id="projectSelect"></select>
+    </label>
+    <button id="newProjectBtn" class="small">New</button>
+  </div>
+  <div class="picker">
+    <label>Prop
+      <select id="propSelect"></select>
+    </label>
+    <button id="newPropBtn" class="small">New</button>
+  </div>
+  <div class="picker" id="camPicker">
+    <span>Camera spot</span>
+    <div id="camButtons" class="seg"></div>
+  </div>
+  <div id="jobBar" class="job hidden">
+    <span id="jobLabel"></span>
+    <progress id="jobProgress" max="1" value="0"></progress>
+    <span id="jobMessage"></span>
+    <button id="jobCancelBtn" class="small danger">Cancel</button>
+  </div>
+</header>
+
+<nav id="tabs">
+  <button data-tab="project" class="active">1. Project</button>
+  <button data-tab="lights">2. Lights</button>
+  <button data-tab="align">3. Align</button>
+  <button data-tab="capture">4. Capture</button>
+  <button data-tab="review">5. Review</button>
+  <button data-tab="model">6. Model</button>
+</nav>
+</div>
+
+<main>
+  <div id="noProject" class="card hidden">
+    <p>Create a project to start. A project holds one or more props (the tree, each bush) and lives in
+      <code id="rootPath"></code>. Copy that folder to move work between the Pi and another computer.</p>
+  </div>
+  <div id="noProp" class="card hidden">
+    <p>Select a prop, or add one with <b>New</b> next to Prop.</p>
+  </div>
+
+  <!-- PROJECT -->
+  <section id="tab-project" class="tab">
+    <div class="card">
+      <h2>Prop settings</h2>
+      <form id="propForm" class="grid-form">
+        <label>Mode
+          <select name="mode">
+            <option value="3d">3D (three camera spots, e.g. a wrapped tree)</option>
+            <option value="2d">2D (one camera spot, e.g. a bush)</option>
+          </select>
+        </label>
+        <label>Controller IP (blank = multicast)
+          <input name="controller_ip" placeholder="192.168.1.143">
+        </label>
+        <div class="span2">
+          <div class="row-head">Universes <span class="hint">Pixels are numbered in order across these universes, 3 channels per pixel.</span></div>
+          <table class="universes">
+            <thead><tr><th>Universe</th><th>Channels</th><th>Pixels</th><th></th></tr></thead>
+            <tbody id="universeRows"></tbody>
+          </table>
+          <button type="button" id="addUniverseBtn" class="small">Add universe</button>
+          <span id="pixelTotal" class="hint"></span>
+        </div>
+        <label>Image width <input name="image_w" type="number" min="320"></label>
+        <label>Image height <input name="image_h" type="number" min="240"></label>
+        <label class="only3d">Camera distance to triangle center (any unit)
+          <input name="distance" type="number" step="any" min="1">
+        </label>
+        <label class="only3d">Camera FOV horizontal / vertical (degrees)
+          <span class="pair"><input name="fov_h" type="number" step="any"><input name="fov_v" type="number" step="any"></span>
+        </label>
+        <label>Pixel color during mapping <input name="on_color" type="color"></label>
+        <label>Settle time per pixel (ms) <input name="settle_ms" type="number" min="0" step="10"></label>
+        <div class="span2 actions">
+          <button type="submit" class="primary">Save settings</button>
+          <button type="button" id="deletePropBtn" class="danger">Remove prop</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Camera</h2>
+      <div class="inline">
+        <label>Source <input id="cameraSource" placeholder="0" size="28" title="USB index (0, 1, ...) or a stream URL"></label>
+        <button id="cameraOpenBtn" class="primary">Open</button>
+        <button id="cameraCloseBtn">Close</button>
+        <button id="cameraProbeBtn">Find USB cameras</button>
+      </div>
+      <p id="cameraStatus" class="hint"></p>
+    </div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div id="propSummary"></div>
+    </div>
+  </section>
+
+  <!-- LIGHTS -->
+  <section id="tab-lights" class="tab hidden">
+    <div class="card">
+      <h2>Lights check</h2>
+      <p class="hint">Confirms the controller is receiving sACN before aligning. Bridge mode may be needed on the controller.</p>
+      <div class="inline">
+        <button id="lightsOnBtn" class="primary">All on</button>
+        <button id="lightsOffBtn">All off</button>
+      </div>
+      <div class="inline">
+        <label>Single pixel <input id="lightsPixel" type="number" min="0" value="0" style="width:6em"></label>
+        <input id="lightsPixelSlider" type="range" min="0" value="0" class="grow">
+        <button id="lightsPixelBtn">Light pixel</button>
+      </div>
+      <p id="lightsState" class="hint"></p>
+    </div>
+  </section>
+
+  <!-- ALIGN -->
+  <section id="tab-align" class="tab hidden">
+    <div class="layout2">
+      <div class="card viewer-card">
+        <div class="camera-closed hidden">Camera is closed. <button class="open-camera primary small">Open camera</button></div>
+        <div class="live">
+          <img class="stream" alt="">
+          <canvas id="alignCanvas"></canvas>
+        </div>
+      </div>
+      <div class="card side">
+        <h2>Aim</h2>
+        <p class="hint">Put markers on the other two camera spots. Rotate the camera until each yellow line sits on a marker. Re-level as you go.</p>
+        <label>Yellow line spread <span id="spreadValue"></span>
+          <input id="spreadSlider" type="range" min="5" value="640">
+        </label>
+
+        <h2>Height reference</h2>
+        <p class="hint">Lights a short run of pixels. Slide it to a spot that is easy to see, then raise or lower the camera until the run sits on the blue horizontal line. Lock it so every camera spot uses the same pixels.</p>
+        <div class="inline">
+          <label>Pixels
+            <select id="refCount"><option>3</option><option selected>4</option><option>5</option></select>
+          </label>
+          <span id="refLabel" class="mono"></span>
+        </div>
+        <input id="refSlider" type="range" min="0" value="0" class="full">
+        <div class="inline">
+          <button id="refStepDown" class="small">&minus;1</button>
+          <button id="refStepUp" class="small">+1</button>
+          <button id="refLockBtn" class="primary small">Lock</button>
+          <button id="refUnlockBtn" class="small">Unlock</button>
+          <button id="refShowBtn" class="small">Light locked run</button>
+          <button id="refOffBtn" class="small">Off</button>
+        </div>
+        <p id="refLocked" class="hint"></p>
+
+        <h2>Save</h2>
+        <button id="saveAlignBtn" class="primary">Save this camera spot</button>
+        <div id="alignSaved" class="hint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAPTURE -->
+  <section id="tab-capture" class="tab hidden">
+    <div class="layout2">
+      <div class="card viewer-card">
+        <div class="camera-closed hidden">Camera is closed. <button class="open-camera primary small">Open camera</button></div>
+        <div class="live">
+          <img class="stream" alt="">
+          <canvas id="maskCanvas"></canvas>
+        </div>
+      </div>
+      <div class="card side">
+        <h2>Mask</h2>
+        <p class="hint">Turn all pixels on, then click around the prop to outline it. Bright lights outside the outline are ignored during detection.</p>
+        <div class="inline">
+          <button id="maskLightsOnBtn" class="small">All on</button>
+          <button id="maskLightsOffBtn" class="small">All off</button>
+        </div>
+        <div class="inline">
+          <button id="maskUndoBtn" class="small">Undo point</button>
+          <button id="maskClearBtn" class="small">Clear</button>
+          <button id="maskSaveBtn" class="primary small">Save mask</button>
+        </div>
+        <p id="maskInfo" class="hint"></p>
+
+        <h2>Capture</h2>
+        <p class="hint">Lights each pixel in turn and saves a still. Nothing to click; review happens later.</p>
+        <div class="inline">
+          <button id="captureStartBtn" class="primary">Start capture</button>
+          <button id="captureResumeBtn">Resume</button>
+        </div>
+        <div id="captureInfo" class="hint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEW -->
+  <section id="tab-review" class="tab hidden">
+    <div class="card">
+      <div class="inline">
+        <label>Background
+          <select id="detBackground">
+            <option value="all_off">All-off frame</option>
+            <option value="neighbors">Neighboring frames (use if exposure drifted)</option>
+          </select>
+        </label>
+        <label>Min brightness rise <input id="detMinPeak" type="number" value="40" min="5" max="250" style="width:5em"></label>
+        <label class="check"><input id="detKeepManual" type="checkbox" checked> Keep manual and hidden marks</label>
+        <button id="detectBtn" class="primary">Run detection</button>
+      </div>
+      <div id="detSummary" class="hint"></div>
+      <div id="pixelStrip" class="strip"></div>
+      <div class="legend">
+        <span class="sw ok"></span>found <span class="sw manual"></span>manual <span class="sw ambiguous"></span>ambiguous
+        <span class="sw none"></span>not found <span class="sw hidden-s"></span>hidden
+      </div>
+    </div>
+    <div class="layout2">
+      <div class="card viewer-card">
+        <div id="reviewScroll" class="review-scroll">
+          <div id="reviewStage" class="review-stage">
+            <img id="reviewImg" alt="">
+            <canvas id="reviewCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card side">
+        <h2 id="reviewTitle">Pixel</h2>
+        <div id="reviewInfo" class="mono"></div>
+        <div class="inline">
+          <label>Show
+            <select id="reviewFilter">
+              <option value="attention">Needs review</option>
+              <option value="all">All pixels</option>
+              <option value="ambiguous">Ambiguous</option>
+              <option value="none">Not found</option>
+              <option value="manual">Manual</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+        </div>
+        <div class="inline">
+          <button id="prevBtn">&larr; Prev</button>
+          <input id="reviewIndex" type="number" min="0" style="width:6em">
+          <button id="nextBtn">Next &rarr;</button>
+        </div>
+        <div class="inline">
+          <label class="check"><input id="diffToggle" type="checkbox"> Difference view (D)</label>
+          <label>Zoom
+            <select id="zoomSelect"><option value="0">Fit</option><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>
+          </label>
+        </div>
+        <p class="hint">Click the lit pixel to place it. Keys: arrows move, A accepts, H marks hidden, C clears.</p>
+        <div class="inline">
+          <button id="acceptBtn" class="small">Accept (A)</button>
+          <button id="hiddenBtn" class="small">Hidden (H)</button>
+          <button id="clearBtn" class="small">Clear (C)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODEL -->
+  <section id="tab-model" class="tab hidden">
+    <div class="card">
+      <form id="modelForm" class="inline wrap">
+        <label class="check"><input name="fill_short_gaps_only" type="checkbox"> Fill short gaps only</label>
+        <label>Max gap <input name="max_gap" type="number" min="1" style="width:4em"></label>
+        <label>Size by
+          <select name="sizing">
+            <option value="cells">Grid cells on longest side</option>
+            <option value="scale">Scale factor (units per cell)</option>
+          </select>
+        </label>
+        <label class="sizing-cells">Grid cells <input name="grid_cells" type="number" min="10" style="width:5em" placeholder="auto"></label>
+        <label class="sizing-scale" title="Same as xLights_output_scale_factor in the old scripts: model units per xLights cell. Larger means a smaller file. Old values: tree 1.7, bushes 0.5.">
+          Scale factor <input name="scale_factor" type="number" step="any" min="0.001" style="width:5em">
+        </label>
+        <label class="only3d">Min ray angle (deg) <input name="min_ray_angle" type="number" step="any" style="width:4em"></label>
+        <label class="only3d">Disagreement limit (fraction of distance) <input name="outlier_fraction" type="number" step="any" style="width:5em"></label>
+        <label class="check"><input name="use_ambiguous" type="checkbox"> Use ambiguous detections</label>
+        <button type="submit" class="primary">Build model</button>
+      </form>
+      <div id="modelSummary"></div>
+      <div id="modelDownloads" class="inline hidden">
+        <a class="button" data-kind="xmodel">Download .xmodel</a>
+        <a class="button" data-kind="csv">Download points CSV</a>
+        <a class="button" data-kind="ply">Download PLY</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Result</h2>
+      <div id="finalPlot" class="plot"></div>
+    </div>
+    <div class="card">
+      <h2>Per-camera detections</h2>
+      <div id="camPlots" class="cam-plots"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="nameDialog">
+  <form method="dialog">
+    <h3 id="nameDialogTitle"></h3>
+    <input id="nameDialogInput" required pattern="[A-Za-z0-9][A-Za-z0-9 _.\-]{0,63}">
+    <div id="nameDialogExtra"></div>
+    <div class="actions">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="ok" class="primary">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -128,6 +128,21 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-lumos.py
-packet.py
-archive/
+# Pixel Mapper app: project data and per-machine settings
+/projects/
+/local_settings.json
+*.tmp
+
+# Personal notes
+/notes/
+
+# Original scripts: local Lumos copy, old experiments, and run output
+original_scripts/lumos.py
+original_scripts/packet.py
+original_scripts/archive/
+original_scripts/data/
+original_scripts/images_*/
+original_scripts/*.xmodel
+original_scripts/*.json
+original_scripts/data*.txt
+original_scripts/out*.txt
