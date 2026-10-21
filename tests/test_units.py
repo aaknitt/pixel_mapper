@@ -201,6 +201,42 @@ class XModelTest(unittest.TestCase):
         self.assertEqual(shape_small, (2, 5, 3))
         self.assertAlmostEqual(xl.grid_step(pts, "3d", grid_cells=11), 2.0)
 
+    def test_auto_sizing_follows_pixel_spacing(self):
+        # A tightly wrapped trunk inside a tall prop: 120 cells on the longest side crowds it.
+        t = np.linspace(0, 40 * np.pi, 600)
+        trunk = np.column_stack([7 * np.cos(t), 7 * np.sin(t), np.linspace(0, 60, 600)])
+        top = np.column_stack([np.zeros(150), np.zeros(150), np.linspace(70, 240, 150)])
+        pts = np.vstack([trunk, top])
+        _, _, fixed_nudged = xl.to_grid(pts, "3d", grid_cells=120)
+        step, sized_by = xl.grid_sizing(pts, "3d")
+        cells, shape, nudged = xl.to_grid(pts, "3d")
+        self.assertGreater(fixed_nudged, 50)
+        self.assertLessEqual(nudged, len(pts) * 0.02)
+        self.assertLess(step, 240 / 119)
+        self.assertTrue(sized_by.startswith("auto"))
+        self.assertLessEqual(max(shape), xl.XLIGHTS_MAX_SIDE)
+        self.assertLessEqual(shape[0] * shape[1] * shape[2], xl.AUTO_MAX_CELLS)
+        parsed, _ = parse_xmodel(xl.xmodel_xml("tree", cells, shape))
+        self.assertEqual(set(parsed), set(range(1, len(pts) + 1)))
+
+    def test_auto_sizing_never_coarser_than_default(self):
+        pts = np.array([[0.0, 0.0, 0.0], [100.0, 50.0, 80.0], [50.0, 100.0, 20.0]])
+        self.assertAlmostEqual(xl.grid_step(pts, "3d"), 100.0 / 119)
+
+    def test_auto_sizing_respects_file_size_limit(self):
+        # Very close pixels in a large cube would need a huge grid to separate them all.
+        rng = np.random.default_rng(1)
+        corners = rng.uniform(0, 1000, size=(50, 3))
+        corners[0], corners[1] = 0.0, 1000.0
+        line = np.column_stack([np.linspace(400, 475, 750), np.full(750, 500.0), np.full(750, 500.0)])
+        pts = np.vstack([corners, line])
+        step, sized_by = xl.grid_sizing(pts, "3d")
+        cells, shape, _ = xl.to_grid(pts, "3d")
+        self.assertEqual(sized_by, "auto, limited by model size")
+        self.assertLessEqual(shape[0] * shape[1] * shape[2], xl.AUTO_MAX_CELLS)
+        self.assertLessEqual(max(shape), xl.XLIGHTS_MAX_SIDE)
+        self.assertEqual(len(set(cells.values())), len(pts))
+
     def test_collisions_nudged(self):
         pts = np.array([[0.0, 0.0, 0.0], [0.01, 0.0, 0.0], [10.0, 10.0, 0.0]])
         cells, shape, nudged = xl.to_grid(pts, "2d", grid_cells=11)

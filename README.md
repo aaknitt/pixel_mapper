@@ -735,8 +735,17 @@ The app saves these settings with the prop when you click **Build model**.
     `xLights_output_scale_factor` in the original scripts.
 
 - **Grid cells**: Shows when **Size by** is **Grid cells on longest side**. The number of
-  cells on the longest side of the model. The minimum is 10. Leave it blank to use the
-  default: 120 for 3D, 200 for 2D.
+  cells on the longest side of the model. The minimum is 10.
+  - Leave it blank to let the app find the size. This is the default, and it is correct for
+    most props.
+  - The app measures the distance from each pixel to the nearest pixel. Then it makes the
+    cells small enough that nearby pixels go in different cells.
+  - The app does not use more than 300 cells on a side, or more than 2 million cells in
+    total. Larger models make xLights slow. It does not use fewer than 120 cells (3D) or
+    200 cells (2D) on the longest side.
+  - The summary shows the cell size that the app used, how many pixels it moved to a free
+    cell, and the number of nodes in the `.xmodel`. The node count in xLights must be the same.
+  - If the model in xLights does not look correct, try a smaller scale factor.
 
 - **Scale factor**: Shows when **Size by** is **Scale factor (units per cell)**. The size of
   one cell in model units. Use a value greater than 0.

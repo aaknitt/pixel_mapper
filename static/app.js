@@ -713,7 +713,7 @@ function renderModel(result) {
       ${runs.length ? `<tr><th>Empty runs</th><td class="mono">${runs.join(", ")}</td></tr>` : ""}
       <tr><th>xLights grid</th><td>${g.cols} wide x ${g.rows} high${result.mode === "3d" ? ` x ${g.layers} deep` : ""};
         ${g.units_per_cell !== undefined ? `scale factor ${g.units_per_cell} (${escapeHtml(g.sized_by)});` : ""}
-        ${g.nudged} pixel(s) moved to a free cell</td></tr>
+        ${g.nudged} pixel(s) moved to a free cell${g.nodes !== undefined ? `; ${g.nodes} nodes in the .xmodel` : ""}</td></tr>
       ${result.mode === "3d" ? `<tr><th>Camera pairs</th><td>${st.grazing_or_behind} rejected (rays too close to parallel or behind a camera),
         ${st.outlier_dropped} outlier pair(s) dropped, ${st.disagree} pixel(s) where pairs disagreed, ${st.single_pair} from a single pair</td></tr>` : ""}
     </table>

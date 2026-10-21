@@ -75,10 +75,9 @@ def build(project: str, prop: str, options: dict | None = None) -> dict:
     for i in np.nonzero(filled)[0]:
         notes[i] = "filled"
 
-    grid_cells = int(opts["grid_cells"] or xl.grid_cells_default(mode))
-    scale_factor = opts["scale_factor"]
-    step = xl.grid_step(points, mode, grid_cells, scale_factor)
-    cells, shape, nudged = xl.to_grid(points, mode, grid_cells, scale_factor)
+    grid_cells = int(opts["grid_cells"]) if opts["grid_cells"] else None
+    step, sized_by = xl.grid_sizing(points, mode, grid_cells, opts["scale_factor"])
+    cells, shape, nudged = xl.to_grid(points, mode, scale_factor=step)
     cell_count = shape[0] * shape[1] * shape[2]
     if cell_count > MAX_GRID_CELLS:
         raise pj.ProjectError(
@@ -113,8 +112,9 @@ def build(project: str, prop: str, options: dict | None = None) -> dict:
             "rows": shape[1],
             "cols": shape[2],
             "units_per_cell": round(step, 4),
-            "sized_by": "scale factor" if scale_factor else f"{grid_cells} cells on the longest side",
+            "sized_by": sized_by,
             "nudged": nudged,
+            "nodes": len(cells),
         },
         "stats": stats,
         "warnings": warnings,

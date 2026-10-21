@@ -14,6 +14,13 @@ from xml.sax.saxutils import quoteattr
 import numpy as np
 
 SOURCE_VERSION = "2024.01"
+# xLights warns that a custom model wider, higher or deeper than this slows rendering.
+XLIGHTS_MAX_SIDE = 300
+# Automatic sizing keeps the grid under this many cells. The .xmodel is about one byte per
+# cell, and xLights renders effects on a buffer with one pixel per cell.
+AUTO_MAX_CELLS = 2_000_000
+# Automatic sizing separates all but this fraction of the closest neighbor pairs.
+AUTO_SPACING_PERCENTILE = 10
 
 
 def grid_cells_default(mode: str) -> int:
@@ -24,23 +31,79 @@ def _placed(points: np.ndarray, dims: int) -> list[int]:
     return [i for i in range(len(points)) if not np.isnan(points[i, :dims]).any()]
 
 
-def grid_step(points: np.ndarray, mode: str, grid_cells: int | None = None, scale_factor: float | None = None) -> float:
-    """Model units per grid cell.
+def nearest_neighbor_distances(coords: np.ndarray, block: int = 256) -> np.ndarray:
+    n = len(coords)
+    out = np.full(n, np.inf)
+    if n < 2:
+        return out
+    sq = (coords**2).sum(axis=1)
+    for start in range(0, n, block):
+        part = coords[start : start + block]
+        d2 = sq[start : start + block, None] + sq[None, :] - 2.0 * part @ coords.T
+        rows = np.arange(len(part))
+        d2[rows, rows + start] = np.inf
+        out[start : start + len(part)] = d2.min(axis=1)
+    return np.sqrt(np.clip(out, 0.0, None))
+
+
+def _grid_cell_count(spans: np.ndarray, step: float) -> float:
+    return float(np.prod(np.rint(spans / step) + 1))
+
+
+def auto_step(coords: np.ndarray, mode: str) -> tuple[float, str]:
+    """Pick a step small enough that neighboring pixels get their own cells.
+
+    Two points share a cell only if they are closer than step * sqrt(dims), so the step is
+    the typical closest-neighbor distance divided by sqrt(dims). It is never coarser than
+    the old fixed default, and never finer than the xLights side limit or the file-size limit.
+    """
+    spans = coords.max(axis=0) - coords.min(axis=0)
+    span = float(spans.max())
+    if span <= 0:
+        return 1.0, "auto"
+    coarse = span / (grid_cells_default(mode) - 1)
+    nn = nearest_neighbor_distances(coords)
+    nn = nn[np.isfinite(nn) & (nn > span * 1e-6)]
+    if not len(nn):
+        return coarse, f"auto, {grid_cells_default(mode)} cells on the longest side"
+    spacing = float(np.percentile(nn, AUTO_SPACING_PERCENTILE)) / np.sqrt(coords.shape[1])
+    if spacing >= coarse:
+        return coarse, f"auto, {grid_cells_default(mode)} cells on the longest side"
+    floor = max(span / (XLIGHTS_MAX_SIDE - 1), spacing)
+    if _grid_cell_count(spans, floor) <= AUTO_MAX_CELLS:
+        return floor, "auto from pixel spacing" if floor == spacing else "auto, limited by xLights size"
+    lo, hi = floor, coarse
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        lo, hi = (lo, mid) if _grid_cell_count(spans, mid) <= AUTO_MAX_CELLS else (mid, hi)
+    return hi, "auto, limited by model size"
+
+
+def grid_sizing(
+    points: np.ndarray, mode: str, grid_cells: int | None = None, scale_factor: float | None = None
+) -> tuple[float, str]:
+    """Model units per grid cell, and how that value was chosen.
 
     A scale factor is used as-is, the same as xLights_output_scale_factor in the old scripts
-    (3D units are the camera-distance units; 2D units are camera image pixels). Otherwise the
-    step is chosen so the longest side spans grid_cells cells.
+    (3D units are the camera-distance units; 2D units are camera image pixels). Grid cells set
+    the number of cells on the longest side. With neither, the step comes from pixel spacing.
     """
     if scale_factor:
-        return float(scale_factor)
+        return float(scale_factor), "scale factor"
     dims = 3 if mode == "3d" else 2
     placed = _placed(points, dims)
     if not placed:
-        return 1.0
+        return 1.0, "auto"
     coords = points[placed, :dims]
+    if not grid_cells:
+        return auto_step(coords, mode)
     span = float((coords.max(axis=0) - coords.min(axis=0)).max())
-    cells = grid_cells or grid_cells_default(mode)
-    return span / max(cells - 1, 1) if span > 0 else 1.0
+    step = span / max(grid_cells - 1, 1) if span > 0 else 1.0
+    return step, f"{grid_cells} cells on the longest side"
+
+
+def grid_step(points: np.ndarray, mode: str, grid_cells: int | None = None, scale_factor: float | None = None) -> float:
+    return grid_sizing(points, mode, grid_cells, scale_factor)[0]
 
 
 def to_grid(
