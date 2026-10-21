@@ -464,7 +464,7 @@ locked as the height reference.*
 Use a tripod with a bubble level. A small movement of the camera can change the level. Make
 sure that the camera is level after each adjustment.
 
-1. Put markers on the other two camera spots.
+1. Put markers on the ground at the other two camera spots.  Flashlights pointed at the camera work well at night.  
 2. Put the camera at the selected camera spot. Make sure that it is level.
 3. Turn the camera until the two markers are at equal distances from the blue vertical line.
 4. Move the **Yellow line spread** slider until each yellow line is on a marker.
@@ -479,7 +479,7 @@ Soccer balls are the markers.
 
 ### Set the height (3D prop)
 
-Do this procedure at camera spot 1 first.
+Do this procedure at camera spot 1 first.  We'll illuminate a few pixels on the prop to use as our vertical reference and center the camera's vertical field of view on those pixels at each camera location as we proceed.  
 
 1. In **Pixels**, select how many pixels to turn on (3, 4, or 5).
 2. Move the slider until the lit pixels are easy to see from all camera spots.
